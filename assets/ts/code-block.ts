@@ -1,9 +1,14 @@
+import type { ShikiTransformer } from 'shiki';
+
+const codeBlockTransformer: ShikiTransformer = {
+    pre(node) {
+        this.addClassToHast(node, 'code-block');
+    },
+};
+
 export async function initCodeBlocks(scope: HTMLElement | Document = document): Promise<void> {
     const classicEls = [...scope.querySelectorAll<HTMLElement>('.code-block[data-lang]')];
-
-    // Markdown-generated <pre><code class="language-*"> not already inside .code-block
-    const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:not(.code-block) > code[class*="language-"]')]
-        .map(code => code.closest('pre') as HTMLElement);
+    const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:has(> code[class*="language-"])')];
 
     if (!classicEls.length && !markdownPres.length) return;
 
@@ -25,7 +30,11 @@ export async function initCodeBlocks(scope: HTMLElement | Document = document): 
         const lang = el.dataset.lang || 'text';
         const codeEl = el.querySelector('code');
         if (!codeEl) continue;
-        el.innerHTML = highlighter.codeToHtml(codeEl.textContent || '', { lang, theme: 'github-dark' });
+        el.outerHTML = highlighter.codeToHtml(codeEl.textContent || '', {
+            lang,
+            theme: 'github-dark',
+            transformers: [codeBlockTransformer],
+        });
     }
 
     for (const pre of markdownPres) {
@@ -33,9 +42,10 @@ export async function initCodeBlocks(scope: HTMLElement | Document = document): 
         if (!codeEl) continue;
         const match = codeEl.className.match(/language-(\w+)/);
         const lang = match ? match[1] : 'text';
-        const wrapper = document.createElement('div');
-        wrapper.className = 'code-block';
-        wrapper.innerHTML = highlighter.codeToHtml(codeEl.textContent || '', { lang, theme: 'github-dark' });
-        pre.replaceWith(wrapper);
+        pre.outerHTML = highlighter.codeToHtml(codeEl.textContent || '', {
+            lang,
+            theme: 'github-dark',
+            transformers: [codeBlockTransformer],
+        });
     }
 }
