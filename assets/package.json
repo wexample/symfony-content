@@ -1,0 +1,7 @@
+{
+  "name": "@wexample/symfony-content",
+  "version": "1.0.1",
+  "peerDependencies": {
+    "shiki": "^4.0.0"
+  }
+}
