@@ -1,6 +1,6 @@
 # symfony_content
 
-Version: 1.0.1
+Version: 1.0.2
 
 Content management helpers for Symfony
 
