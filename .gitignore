@@ -44,3 +44,5 @@ coverage/
 /dist/
 /out/
 /coverage/
+coverage-*.json
+coverage*.lcov
