@@ -17,7 +17,8 @@
   ],
   "require": {
     "php": ">=8.2",
-    "wexample/symfony-helpers": ">=4.0.0"
+    "wexample/symfony-helpers": ">=4.0.0",
+    "twig/markdown-extra": "^3.0"
   },
   "repositories": [
     {
