@@ -3,7 +3,7 @@
   "description": "Content management helpers for Symfony",
   "type": "library",
   "license": "MIT",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "autoload": {
     "psr-4": {
       "Wexample\\SymfonyContent\\": "src/"
@@ -17,7 +17,7 @@
   ],
   "require": {
     "php": ">=8.2",
-    "wexample/symfony-helpers": ">=4.0.0",
+    "wexample/symfony-helpers": ">=5.0.0",
     "twig/markdown-extra": "^3.0"
   },
   "repositories": [

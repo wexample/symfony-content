@@ -1,0 +1,75 @@
+## Architecture
+
+The package is a Symfony bundle with three PHP classes and one TypeScript module. It owns no entity, no controller and no template: it exposes a Twig function that reads a project file, and a browser-side script that re-renders code blocks. Everything else is registration plumbing.
+
+### The pieces
+
+| File | Owns |
+| --- | --- |
+| {{ path("src/WexampleSymfonyContentBundle.php") }} | Bundle entry point; declares where the front assets live |
+| {{ path("src/DependencyInjection/WexampleSymfonyContentExtension.php") }} | Loads the service definitions into the container |
+| {{ path("src/Resources/config/services.yaml") }} | Autowires `Service` and `Twig` classes |
+| {{ path("src/Twig/MarkdownExtension.php") }} | The `markdown_file()` Twig function |
+| {{ path("assets/ts/code-block.ts") }} | `initCodeBlocks()`, the Shiki highlighting pass |
+
+PSR-4 maps `Wexample\SymfonyContent\` to `src/`, declared in {{ path("composer.json") }}.
+
+### Container registration
+
+`WexampleSymfonyContentBundle` extends `AbstractBundle` from `wexample/symfony-helpers`, so Symfony resolves the extension by convention and calls `WexampleSymfonyContentExtension::load()`. That method delegates entirely:
+
+```php
+$this->loadConfig(
+    __DIR__,
+    $container
+);
+```
+
+`loadConfig()` lives in `AbstractWexampleSymfonyExtension` and builds a `YamlFileLoader` on `$callingDir.'/../Resources/config'`, loading `services.yaml` by default. Adding a second configuration file means passing its name as the third argument, not touching the extension's structure.
+
+The service file registers one namespace prefix, autowired and autoconfigured, non-public:
+
+```yaml
+    Wexample\SymfonyContent\:
+        resource: '../../{Service,Twig}'
+        tags: ['controller.service_arguments']
+```
+
+Only `src/Twig/` exists today — the `Service` half of the brace matches nothing, and is there so a service class can be dropped in without editing the file. A class placed anywhere else under `src/` is autoloaded but never registered as a service.
+
+### Front asset declaration
+
+The bundle implements `LoaderBundleInterface`, whose single method `getLoaderFrontPaths(): array` is how the suite's front loader discovers a bundle's assets:
+
+```php
+return [
+    BundleHelper::getBundleCssAlias(static::class) => __DIR__ . '/../assets/',
+];
+```
+
+`getBundleCssAlias()` kebab-cases the first two namespace segments and prefixes them with `@`, so this bundle publishes `assets/` under the alias `@wexample/symfony-content`. The directory is also an npm package in its own right — {{ path("assets/package.json") }} names it `@wexample/symfony-content` and declares `shiki: ^4.0.0` as a peer dependency, left to the consuming application to install.
+
+### Server side: reading a markdown file
+
+`MarkdownExtension` registers a single function and takes `KernelInterface` by constructor injection:
+
+```php
+new TwigFunction('markdown_file', $this->markdownFile(...)),
+```
+
+The call path is short. `markdownFile()` joins the argument to `$this->kernel->getProjectDir()`, returns `''` when the file is absent, and otherwise returns `file_get_contents($fullPath)` — the raw markdown, unconverted and unescaped. Two consequences worth knowing before extending it: the path is resolved against the project directory, so it addresses application files rather than bundle ones, and it is interpolated with no traversal check, so it is not meant to receive user input.
+
+Conversion to HTML is not this package's job. {{ path("composer.json") }} requires `twig/markdown-extra: ^3.0` so the returned string can be piped through that library's markdown filter in the template; no PHP file here references it.
+
+### Browser side: highlighting
+
+`initCodeBlocks(scope = document)` is an async function, not an auto-running script — the application decides when to call it and on which subtree. It collects two families of elements:
+
+```ts
+const classicEls = [...scope.querySelectorAll<HTMLElement>('.code-block[data-lang]')];
+const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:has(> code[class*="language-"])')];
+```
+
+The first is markup written by hand, carrying its language in `data-lang`; the second is what a markdown renderer emits, with the language in the `language-*` class. If neither matches, the function returns before doing anything — Shiki is behind `await import('shiki')`, so the highlighter never enters the bundle on a page without code.
+
+The languages of both families are deduplicated into a single `langs` array and one highlighter is created for the whole scope, with the `github-dark` theme hardcoded. Each element is then replaced through `el.outerHTML = highlighter.codeToHtml(...)`, which discards the original node: attributes, listeners and identity on the source element do not survive the pass. A `ShikiTransformer` puts the `code-block` class back on the generated `<pre>`, so styling stays stable across both families and across repeated runs.

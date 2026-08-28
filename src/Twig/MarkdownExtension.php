@@ -24,7 +24,7 @@ class MarkdownExtension extends AbstractExtension
     {
         $fullPath = $this->kernel->getProjectDir().'/'.$path;
 
-        if (!file_exists($fullPath)) {
+        if (! file_exists($fullPath)) {
             return '';
         }
 

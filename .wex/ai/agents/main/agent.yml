@@ -1,1 +1,2 @@
+model: claude:sonnet-5
 description: Generalist agent, no specialization.
