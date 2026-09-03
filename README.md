@@ -1,6 +1,6 @@
 # symfony_content
 
-Version: 2.0.1
+Version: 2.0.2
 
 `wexample/symfony-content` is a small Symfony bundle for rendering authored content — Markdown files and the code blocks inside them — in an application's Twig templates. It registers a `markdown_file` Twig function that reads a file relative to the kernel's project directory (src/Twig/MarkdownExtension.php), and ships a front asset, assets/ts/code-block.ts, that highlights `.code-block[data-lang]` elements and Markdown `<pre><code class="language-…">` blocks with Shiki. It targets Symfony 8.2+ projects already built on `wexample/symfony-helpers`, where documentation or editorial pages live as Markdown files in the repository rather than in a database.
 
@@ -103,7 +103,7 @@ Visit the [Wexample Suite documentation](https://docs.wexample.com) for the comp
 ## Dependencies
 
 - php: >=8.2
-- wexample/symfony-helpers: >=6.0.0
+- wexample/symfony-helpers: >=7.0.0
 - twig/markdown-extra: ^3.0
 
 ## Versioning & Compatibility Policy
