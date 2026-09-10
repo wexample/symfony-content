@@ -16,7 +16,7 @@
     }
   ],
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.5",
     "wexample/symfony-helpers": ">=7.0.0",
     "twig/markdown-extra": "^3.0"
   },
@@ -28,5 +28,10 @@
         "symlink": true
       }
     }
-  ]
+  ],
+  "extra": {
+    "install": {
+      "bundle_env": "all"
+    }
+  }
 }
