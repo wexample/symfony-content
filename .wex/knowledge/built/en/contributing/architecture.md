@@ -1,6 +1,6 @@
 ## Architecture
 
-The package is a Symfony bundle with three PHP classes and one TypeScript module. It owns no entity, no controller and no template: it exposes a Twig function that reads a project file, and a browser-side script that re-renders code blocks. Everything else is registration plumbing.
+The package is a Symfony bundle with two PHP classes and one TypeScript module. It owns no entity, no controller, no template and — since markdown moved to `wexample/symfony-template` — no Twig extension: what it carries is a browser-side script that re-renders code blocks. Everything else is registration plumbing.
 
 ### The pieces
 
@@ -9,7 +9,6 @@ The package is a Symfony bundle with three PHP classes and one TypeScript module
 | src/WexampleSymfonyContentBundle.php | Bundle entry point; declares where the front assets live |
 | src/DependencyInjection/WexampleSymfonyContentExtension.php | Loads the service definitions into the container |
 | src/Resources/config/services.yaml | Autowires `Service` and `Twig` classes |
-| src/Twig/MarkdownExtension.php | The `markdown_file()` Twig function |
 | assets/ts/code-block.ts | `initCodeBlocks()`, the Shiki highlighting pass |
 
 PSR-4 maps `Wexample\SymfonyContent\` to `src/`, declared in composer.json.
@@ -35,7 +34,7 @@ The service file registers one namespace prefix, autowired and autoconfigured, n
         tags: ['controller.service_arguments']
 ```
 
-Only `src/Twig/` exists today — the `Service` half of the brace matches nothing, and is there so a service class can be dropped in without editing the file. A class placed anywhere else under `src/` is autoloaded but never registered as a service.
+Neither directory exists today — the brace matches nothing, and is there so a service or an extension can be dropped in without editing the file. A class placed anywhere else under `src/` is autoloaded but never registered as a service.
 
 ### Front asset declaration
 
@@ -48,18 +47,6 @@ return [
 ```
 
 `getBundleCssAlias()` kebab-cases the first two namespace segments and prefixes them with `@`, so this bundle publishes `assets/` under the alias `@wexample/symfony-content`. The directory is also an npm package in its own right — assets/package.json names it `@wexample/symfony-content` and declares `shiki: ^4.0.0` as a peer dependency, left to the consuming application to install.
-
-### Server side: reading a markdown file
-
-`MarkdownExtension` registers a single function and takes `KernelInterface` by constructor injection:
-
-```php
-new TwigFunction('markdown_file', $this->markdownFile(...)),
-```
-
-The call path is short. `markdownFile()` joins the argument to `$this->kernel->getProjectDir()`, returns `''` when the file is absent, and otherwise returns `file_get_contents($fullPath)` — the raw markdown, unconverted and unescaped. Two consequences worth knowing before extending it: the path is resolved against the project directory, so it addresses application files rather than bundle ones, and it is interpolated with no traversal check, so it is not meant to receive user input.
-
-Conversion to HTML is not this package's job. composer.json requires `twig/markdown-extra: ^3.0` so the returned string can be piped through that library's markdown filter in the template; no PHP file here references it.
 
 ### Browser side: highlighting
 
