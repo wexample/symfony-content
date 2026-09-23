@@ -1,6 +1,6 @@
 ## Architecture
 
-The package is a Symfony bundle with two PHP classes and two TypeScript modules. It owns no entity, no controller, no template and — since markdown moved to `wexample/symfony-template` — no Twig extension: what it carries is two browser-side passes over code blocks. Everything else is registration plumbing.
+The package is a Symfony bundle with four PHP files and two TypeScript modules. It owns no entity, no controller, no template and — since markdown moved to `wexample/symfony-template` — no Twig extension: what it carries is two browser-side passes over code blocks. Everything else is registration plumbing.
 
 ### The pieces
 
@@ -8,7 +8,9 @@ The package is a Symfony bundle with two PHP classes and two TypeScript modules.
 | --- | --- |
 | {{ path("src/WexampleSymfonyContentBundle.php") }} | Bundle entry point; declares where the front assets live |
 | {{ path("src/DependencyInjection/WexampleSymfonyContentExtension.php") }} | Loads the service definitions into the container |
-| {{ path("src/Resources/config/services.yaml") }} | Autowires `Service` and `Twig` classes |
+| {{ path("src/Resources/config/services.yaml") }} | Autowires `Command`, `Service` and `Twig` classes |
+| {{ path("src/Command/CheckNodeInstallCommand.php") }} | `content:check-node-install`, run after `composer install` and `update` |
+| {{ path("src/Traits/SymfonyContentBundleClassTrait.php") }} | Names the bundle for the command |
 | {{ path("assets/ts/code-block.ts") }} | `initCodeBlocks()`, the Shiki highlighting pass |
 | {{ path("assets/ts/mermaid.ts") }} | `initMermaid()`, the diagram pass |
 
@@ -31,11 +33,11 @@ The service file registers one namespace prefix, autowired and autoconfigured, n
 
 ```yaml
     Wexample\SymfonyContent\:
-        resource: '../../{Service,Twig}'
+        resource: '../../{Command,Service,Twig}'
         tags: ['controller.service_arguments']
 ```
 
-Neither directory exists today — the brace matches nothing, and is there so a service or an extension can be dropped in without editing the file. A class placed anywhere else under `src/` is autoloaded but never registered as a service.
+Only `src/Command/` exists today — the other two are there so a service or an extension can be dropped in without editing the file. A class placed anywhere else under `src/` is autoloaded but never registered as a service.
 
 ### Front asset declaration
 
@@ -67,3 +69,7 @@ The languages of both families are deduplicated into a single `langs` array and 
 `initMermaid(scope = document)` takes the blocks a markdown renderer emits for a ```` ```mermaid ```` fence — `pre > code.language-mermaid`, nothing added server-side — and replaces each `<pre>` with a `<figure>` holding the SVG from `mermaid.render()`. Mermaid is behind `await import('mermaid')` like Shiki, so a page without a diagram never loads it, and it runs with `securityLevel: 'strict'` since the source comes from a document. A diagram that does not parse is left as its code block.
 
 `code-block.ts` imports `MERMAID_LANGUAGE_CLASS` from this module and skips those blocks, so the two passes share one definition and can run in either order. Mermaid is a peer dependency, like Shiki.
+
+### Checking the peers
+
+The npm side of this package is its `assets/package.json`, and what it lists there are **peer** dependencies — Shiki and Mermaid are installed by the application, never by this package. The loader compiles every file under `assets/`, so an app that enables the bundle without one of them fails to build on a bare `Module not found`. `content:check-node-install`, run by the composer `post-install-cmd` and `post-update-cmd` scripts, compares that list with the app's `package.json` and names the modules to add.

@@ -5,5 +5,5 @@ services:
         public: false
 
     Wexample\SymfonyContent\:
-        resource: '../../{Service,Twig}'
+        resource: '../../{Command,Service,Twig}'
         tags: ['controller.service_arguments']
