@@ -1,4 +1,5 @@
 import type { ShikiTransformer } from 'shiki';
+import { MERMAID_LANGUAGE_CLASS } from './mermaid';
 
 const codeBlockTransformer: ShikiTransformer = {
     pre(node) {
@@ -8,7 +9,9 @@ const codeBlockTransformer: ShikiTransformer = {
 
 export async function initCodeBlocks(scope: HTMLElement | Document = document): Promise<void> {
     const classicEls = [...scope.querySelectorAll<HTMLElement>('.code-block[data-lang]')];
-    const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:has(> code[class*="language-"])')];
+    // A diagram is left to `initMermaid()`: coloured as code, it would never be drawn.
+    const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:has(> code[class*="language-"])')]
+        .filter(pre => !pre.querySelector(':scope > code')?.classList.contains(MERMAID_LANGUAGE_CLASS));
 
     if (!classicEls.length && !markdownPres.length) return;
 

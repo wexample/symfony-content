@@ -2,7 +2,7 @@
 
 Version: 3.0.0
 
-`wexample/symfony-content` is a small Symfony bundle for the code blocks inside authored content: it ships a front asset, assets/ts/code-block.ts, that highlights `.code-block[data-lang]` elements and Markdown `<pre><code class="language-…">` blocks with Shiki. It targets Symfony 8.2+ projects already built on `wexample/symfony-helpers`, where documentation or editorial pages live as Markdown files in the repository rather than in a database.
+`wexample/symfony-content` is a small Symfony bundle for the code blocks inside authored content: it ships two front passes over what a markdown renderer emits — assets/ts/code-block.ts, which highlights `.code-block[data-lang]` elements and `<pre><code class="language-…">` blocks with Shiki, and assets/ts/mermaid.ts, which draws `language-mermaid` blocks as diagrams. It targets Symfony 8.2+ projects already built on `wexample/symfony-helpers`, where documentation or editorial pages live as Markdown files in the repository rather than in a database.
 
 It used to carry a `markdown_file()` Twig function of its own, which read a file and converted nothing, next to a markdown dependency no PHP file here referenced. Markdown now has one owner in the suite, `wexample/symfony-template`, whose `markdown_file()` both reads and renders — see its cookbook. This package is what is left once that moved out: the browser-side half.
 
@@ -18,7 +18,7 @@ It used to carry a `markdown_file()` Twig function of its own, which read a file
 
 ## Architecture
 
-The package is a Symfony bundle with two PHP classes and one TypeScript module. It owns no entity, no controller, no template and — since markdown moved to `wexample/symfony-template` — no Twig extension: what it carries is a browser-side script that re-renders code blocks. Everything else is registration plumbing.
+The package is a Symfony bundle with two PHP classes and two TypeScript modules. It owns no entity, no controller, no template and — since markdown moved to `wexample/symfony-template` — no Twig extension: what it carries is two browser-side passes over code blocks. Everything else is registration plumbing.
 
 ### The pieces
 
@@ -28,6 +28,7 @@ The package is a Symfony bundle with two PHP classes and one TypeScript module. 
 | src/DependencyInjection/WexampleSymfonyContentExtension.php | Loads the service definitions into the container |
 | src/Resources/config/services.yaml | Autowires `Service` and `Twig` classes |
 | assets/ts/code-block.ts | `initCodeBlocks()`, the Shiki highlighting pass |
+| assets/ts/mermaid.ts | `initMermaid()`, the diagram pass |
 
 PSR-4 maps `Wexample\SymfonyContent\` to `src/`, declared in composer.json.
 
@@ -78,6 +79,12 @@ const markdownPres = [...scope.querySelectorAll<HTMLElement>('pre:has(> code[cla
 The first is markup written by hand, carrying its language in `data-lang`; the second is what a markdown renderer emits, with the language in the `language-*` class. If neither matches, the function returns before doing anything — Shiki is behind `await import('shiki')`, so the highlighter never enters the bundle on a page without code.
 
 The languages of both families are deduplicated into a single `langs` array and one highlighter is created for the whole scope, with the `github-dark` theme hardcoded. Each element is then replaced through `el.outerHTML = highlighter.codeToHtml(...)`, which discards the original node: attributes, listeners and identity on the source element do not survive the pass. A `ShikiTransformer` puts the `code-block` class back on the generated `<pre>`, so styling stays stable across both families and across repeated runs.
+
+### Browser side: diagrams
+
+`initMermaid(scope = document)` takes the blocks a markdown renderer emits for a ```` ```mermaid ```` fence — `pre > code.language-mermaid`, nothing added server-side — and replaces each `<pre>` with a `<figure>` holding the SVG from `mermaid.render()`. Mermaid is behind `await import('mermaid')` like Shiki, so a page without a diagram never loads it, and it runs with `securityLevel: 'strict'` since the source comes from a document. A diagram that does not parse is left as its code block.
+
+`code-block.ts` imports `MERMAID_LANGUAGE_CLASS` from this module and skips those blocks, so the two passes share one definition and can run in either order. Mermaid is a peer dependency, like Shiki.
 
 ## Integration in the Suite
 

@@ -2,6 +2,7 @@
   "name": "@wexample/symfony-content",
   "version": "1.0.1",
   "peerDependencies": {
+    "mermaid": "^11.0.0",
     "shiki": "^4.0.0"
   }
 }
