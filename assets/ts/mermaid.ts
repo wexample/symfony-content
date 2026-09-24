@@ -40,4 +40,14 @@ export async function initMermaid(scope: HTMLElement | Document = document): Pro
             document.getElementById(`d${id}`)?.remove();
         }
     }
+
+    // Mermaid leaves an empty, see-through tooltip at the end of the body,
+    // absolutely placed where it falls — below everything else — so a layout
+    // the height of the window grows by its few pixels and scrolls for nothing.
+    // Pinned to the corner it takes no room, until mermaid moves it to show
+    // something.
+    document.querySelectorAll<HTMLElement>('.mermaidTooltip').forEach((tooltip) => {
+        tooltip.style.top ||= '0';
+        tooltip.style.left ||= '0';
+    });
 }
