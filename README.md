@@ -1,6 +1,6 @@
 # symfony_content
 
-Version: 4.0.0
+Version: 4.0.1
 
 `wexample/symfony-content` is a small Symfony bundle for the code blocks inside authored content: it ships two front passes over what a markdown renderer emits — assets/ts/code-block.ts, which highlights `.code-block[data-lang]` elements and `<pre><code class="language-…">` blocks with Shiki, and assets/ts/mermaid.ts, which draws `language-mermaid` blocks as diagrams. It targets Symfony 8.2+ projects already built on `wexample/symfony-helpers`, where documentation or editorial pages live as Markdown files in the repository rather than in a database.
 
