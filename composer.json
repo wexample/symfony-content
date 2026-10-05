@@ -3,7 +3,7 @@
   "description": "Content management helpers for Symfony",
   "type": "library",
   "license": "MIT",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "autoload": {
     "psr-4": {
       "Wexample\\SymfonyContent\\": "src/"
@@ -17,7 +17,7 @@
   ],
   "require": {
     "php": ">=8.5",
-    "wexample/symfony-helpers": ">=13.0.0"
+    "wexample/symfony-helpers": ">=14.0.0"
   },
   "scripts": {
     "post-install-cmd": [
