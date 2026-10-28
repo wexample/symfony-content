@@ -46,3 +46,4 @@ coverage/
 /coverage/
 coverage-*.json
 coverage*.lcov
+/node_modules
