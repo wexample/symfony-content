@@ -1,6 +1,6 @@
 # symfony_content
 
-Version: 4.0.13
+Version: 4.0.14
 
 Content management helpers for Symfony
 
